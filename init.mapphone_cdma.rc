@@ -35,7 +35,7 @@ on post-fs
     # Power Management
     write /sys/power/sleep_while_idle 1
     write /sys/power/enable_off_mode 1
-    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ondemand
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor powersave
     write /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 250000
     write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/up_threshold 86
     write /sys/devices/system/cpu/cpu0/cpufreq/ondemand/sampling_rate 46875
@@ -56,7 +56,7 @@ on post-fs
 # Mount mtd partitions
     # mount /pds as r/w
     # We chown/chmod /pds again so because mount is run as root + defaults
-    mount yaffs2 mtd@pds /pds nosuid nodev no-checkpoint
+    mount yaffs2 mtd@pds /pds nosuid nodev
     mount ext3 /dev/block/mmcblk1p7 /pds nosuid nodev noatime nodiratime
     chown system system /pds
     chmod 0775 /pds
@@ -138,7 +138,7 @@ on post-fs
     # Temp workaround for HP library cleanup
     symlink /dev/hp3a-omap /dev/hp3A-omap
 
-    mount rootfs rootfs / ro remount
+    mount rootfs rootfs / rw remount
 
 # Install kernel modules
     insmod /system/lib/modules/sec.ko
@@ -277,7 +277,7 @@ service atvc /system/bin/dbvc_atvc_property_set
     group system
     oneshot
 
-#service watchdogd /system/bin/watchdogd
+service watchdogd /system/bin/watchdogd
 
 service telnet /system/bin/telnetd
     oneshot
@@ -295,56 +295,47 @@ service battd /system/bin/battd
 service catcommands /system/bin/catcommands
     group radio
 
-service hciattach /system/bin/hciattach \
+service hciattach /system/bin/hciattach
         -n -t 10 /dev/ttyS1 texasalt 3000000 flow
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
 
-service hciattach_rfmd /system/bin/hciattach \
+service hciattach_rfmd /system/bin/hciattach
         -n -t 10 /dev/ttyS1 texasalt_rfmd 3000000 flow
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
 
 service nap /system/bin/sdptool add NAP
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
     oneshot
 
 service del_nap /system/bin/sdptool remove NAP
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
     oneshot
 
 service panu /system/bin/sdptool add PANU
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
     oneshot
 
 service del_panu /system/bin/sdptool remove PANU
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
     oneshot
 
 service napics /system/bin/sh /system/bin/napics.sh
     user root
-    disabled
     oneshot
 
 service btdhcpd /system/bin/dnsmasq -C /etc/btpan.conf
     user root
-    disabled
     oneshot
 
 service map /system/bin/sdptool add --channel=20 --network=2 MAP
     user bluetooth
     group bluetooth net_bt_admin
-    disabled
     oneshot
 
 service tcmd /system/bin/tcmd
@@ -356,49 +347,41 @@ service tcmd /system/bin/tcmd
 service tcmdhelp /system/bin/tcmdhelp
     socket tcmdhelp stream 0600 system system
     oneshot
-    disabled
 
 # Ecompass daemon
 service akmd2 /system/bin/akmd2
     user compass
     group compass misc input
 
-service wlan_loader /system/bin/wlan_loader \
-        -f /system/etc/wifi/fw_wlan1271.bin -i /system/etc/wifi/tiwlan.ini \
+service wlan_loader /system/bin/wlan_loader
+        -f /system/etc/wifi/fw_wlan1271.bin -i /system/etc/wifi/tiwlan.ini
         -e /pds/wifi/nvs_map.bin
-    disabled
     oneshot
 
-service wlan_loader_rfmd /system/bin/wlan_loader \
-        -f /system/etc/wifi/fw_wlan1271_rfmd.bin -i /system/etc/wifi/tiwlan_rfmd.ini \
+service wlan_loader_rfmd /system/bin/wlan_loader
+        -f /system/etc/wifi/fw_wlan1271_rfmd.bin -i /system/etc/wifi/tiwlan_rfmd.ini
         -e /pds/wifi/nvs_map.bin
-    disabled
     oneshot
 
-service wpa_supplicant /system/bin/wpa_supplicant \
+service wpa_supplicant /system/bin/wpa_supplicant
         -Dtiwlan0 -itiwlan0 -c/data/misc/wifi/wpa_supplicant.conf
 # we will start as root and wpa_supplicant will switch to user wifi
 # after setting up the capabilities required for WEXT
-# user wifi
-# group wifi inet keystore
+    user wifi 
+    group wifi inet keystore
     socket wpa_tiwlan0 dgram 660 wifi wifi
-    disabled
     oneshot
 
 service dhcpcd_tiwlan0 /system/bin/dhcpcd -ABKL tiwlan0
-    disabled
     oneshot
 
 service autoip /system/bin/dhcpcd -BK tiwlan0
-    disabled
     oneshot
 
 service btdhcpcd /system/bin/dhcpcd -ABKL bnep0
-    disabled
     oneshot
 
 service btautoip /system/bin/dhcpcd -BK bnep0
-    disabled
     oneshot
 
 service baseimage /system/bin/dspexec -v -T /system/lib/dsp/baseimage.dof
@@ -414,31 +397,26 @@ service pvrsrv /system/bin/pvrsrvinit
 # bugtogo is triggered by the keycodes defined in vendor/moto/<product>/proprietary/<hw rev>/device_tree.xml
 # The keycodes option is listed below with dummy values, because the parser needs this.
 service bugtogo /system/bin/bugtogo.sh
-    disabled
     user root
     oneshot
     keycodes 0 1
 
-service pppd-ril /system/bin/pppd-ril /dev/ttyUSB0 \
+service pppd-ril /system/bin/pppd-ril /dev/ttyUSB0
         call pppd-ril.options plugin /system/lib/libpppd_plugin-ril.so
     user root
-    disabled
     oneshot
 
-service pppd /system/bin/pppd silent ipparam dun plugin \
+service pppd /system/bin/pppd silent ipparam dun plugin
         /system/lib/libpppd_plugin.so
     user root
-    disabled
     oneshot
 
 service ulogd /system/xbin/ulogd
     user root
-    disabled
     oneshot
 
 service firewall /system/bin/firewall.sh
     user root
-    disabled
     oneshot
 
 service pm_init /system/bin/sh /system/usr/bin/pm_init.sh
@@ -454,7 +432,6 @@ service aplogd /system/bin/aplogd
     oneshot
 
 service fmradio /system/bin/fmradioserver
-    disabled
     group bluetooth
 
 service ftmipcd /system/bin/ftmipcd
@@ -463,17 +440,15 @@ service ftmipcd /system/bin/ftmipcd
     oneshot
 
 service dlnasrv /system/bin/dlnasrv
-    disabled
     oneshot
 
 service dund_dialup /system/bin/dund --listen --channel=6 --nodetach --dialup
     group net_bt net_bt_admin
-    disabled
     oneshot
 
 on property:dev.bootcomplete=1
     start savebpver
-#    start loadpreinstalls
+start loadpreinstalls
 
 service mdm_panicd /system/bin/mdm_panicd
     oneshot
@@ -488,6 +463,5 @@ service vpnclientpm /system/bin/vpnclientpm
     user root
 
 service loadpreinstalls /system/bin/logwrapper /system/bin/loadpreinstalls.sh
-    disabled
     oneshot
 
